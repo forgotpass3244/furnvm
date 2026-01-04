@@ -1,0 +1,235 @@
+
+<!-- chatgpt made this html file btw -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>FurnVM ABI Specification</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0d0d0d;
+            color: #e6e6e6;
+            padding: 24px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #7fd4ff;
+        }
+
+        pre {
+            background: #1a1a1a;
+            padding: 10px;
+            border-left: 4px solid #7fd4ff;
+        }
+
+        ul {
+            margin-left: 24px;
+        }
+
+        .note {
+            color: #ffcc66;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>FurnVM ABI Specification</h1>
+
+    <p>
+        This document defines the Application Binary Interface (ABI) for FurnVM.
+        The ABI is intentionally minimal, explicit, and VM-oriented.
+        Compatibility with real-world ABIs is not a goal.
+    </p>
+
+    <hr>
+
+    <h2>Memory Layout</h2>
+
+    <pre>
+[ HEADER ]
+[ CODE   ]
+[ DATA   ]
+[ STACK  ]  ← grows upward
+[ HEAP   ]
+</pre>
+
+    <p>
+        The stack grows upward toward the heap. Programs are responsible for
+        ensuring stack/heap separation.
+    </p>
+
+    <hr>
+
+    <h2>General Rules</h2>
+
+    <ul>
+        <li>All arguments are passed on the stack</li>
+        <li>Arguments are pushed in reverse order (right-to-left)</li>
+        <li>The callee removes arguments before returning</li>
+        <li>No implicit stack frames exist</li>
+        <li>Return addresses are VM-internal</li>
+    </ul>
+
+    <hr>
+
+    <h2>Registers</h2>
+
+    <h3>Volatility</h3>
+
+    <ul>
+        <li>All registers are volatile</li>
+        <li>No caller-saved or callee-saved registers</li>
+    </ul>
+
+    <h3>Return Registers</h3>
+
+    <ul>
+        <li><b>A</b> — byte / small integer returns</li>
+        <li><b>A64</b> — 64-bit scalar returns</li>
+    </ul>
+
+    <p class="note">
+        A64 is a scratch register and also the default scalar return register.
+        Its contents are undefined across calls unless explicitly used for return.
+    </p>
+
+    <hr>
+
+    <h2>Calling Convention</h2>
+
+    <h3>Caller</h3>
+
+    <ul>
+        <li>Push arguments in reverse order</li>
+        <li>Execute <code>call</code></li>
+        <li>Do not clean arguments</li>
+    </ul>
+
+    <pre>
+push argN
+...
+push arg1
+push arg0
+call function
+; stack is already clean
+</pre>
+
+    <hr>
+
+    <h3>Callee</h3>
+
+    <ul>
+        <li>Read arguments from the stack</li>
+        <li>Pop all arguments before returning</li>
+        <li>Ensure stack alignment is preserved</li>
+    </ul>
+
+    <p class="note">
+        There is no automatic stack frame. All local storage is explicit.
+    </p>
+
+    <hr>
+
+    <h2>Function Returns</h2>
+
+    <h3>Scalar Returns</h3>
+
+    <ul>
+        <li>Place the return value in A or A64</li>
+        <li>Pop all arguments</li>
+        <li>Execute <code>return</code></li>
+    </ul>
+
+    <hr>
+
+    <h3>Struct Returns</h3>
+
+    <p>
+        Structs are returned directly on the stack.
+        No hidden pointers or implicit arguments exist.
+    </p>
+
+    <ul>
+        <li>The callee pushes the struct onto the stack</li>
+        <li>The caller reads the struct from the stack</li>
+    </ul>
+
+    <pre>
+; callee
+pop args
+push struct_data
+return
+</pre>
+
+    <p class="note">
+        Struct-returning functions are the only functions allowed to grow the stack
+        as part of their return value.
+    </p>
+
+    <hr>
+
+    <h2>Syscall ABI</h2>
+
+    <h3>Invocation</h3>
+
+    <p>
+        Syscalls are invoked using the <code>SYSCALL</code> opcode.
+        The syscall number is encoded directly in the instruction.
+    </p>
+
+    <pre>
+SYSCALL &lt;number&gt; -&gt; &lt;return_register&gt;
+</pre>
+
+    <h3>Arguments</h3>
+
+    <ul>
+        <li><b>A64</b> — argument 0</li>
+        <li><b>B64</b> — argument 1</li>
+        <li><b>C64</b> — argument 2</li>
+        <li><b>D64</b> — argument 3</li>
+    </ul>
+
+    <h3>Return Value</h3>
+
+    <ul>
+        <li>The return register is explicitly specified in the opcode</li>
+    </ul>
+
+    <h3>Register Clobbering</h3>
+
+    <ul>
+        <li>Syscalls do <b>not</b> clobber any registers</li>
+        <li>Only the specified return register may be modified</li>
+    </ul>
+
+    <p class="note">
+        This guarantees deterministic behavior and allows syscalls
+        to be treated like pure function calls from the VM’s perspective.
+    </p>
+
+    <hr>
+
+    <h2>Design Philosophy</h2>
+
+    <ul>
+        <li>No hidden ABI state</li>
+        <li>No implicit arguments</li>
+        <li>No register preservation rules</li>
+        <li>Explicit stack manipulation</li>
+        <li>Compiler-friendly lowering</li>
+    </ul>
+
+    <hr>
+
+    <p>End of FurnVM ABI Specification.</p>
+
+</body>
+
+</html>
