@@ -34,22 +34,22 @@ struct System_t
     size_t LastFlushed;
 };
 
-void Kernel_Init(System_t *System);
+void System_Init(System_t *System);
 
-void Kernel_Free(System_t *System);
+void System_Free(System_t *System);
 
-void Kernel_RemoveMachines(System_t *System);
+void System_RemoveMachines(System_t *System);
 
-void Kernel_AddMachine(System_t *System, Machine_t *Machine, Memory *Mem);
+void System_AddMachine(System_t *System, Machine_t *Machine, Memory *Mem);
 
-void Kernel_ExecuteAll(System_t *System);
+void System_ExecuteAll(System_t *System);
 
-QWord Kernel_InvokeSyscall(System_t *System, Machine_t *Machine, Memory *Mem, const QWord Number);
+QWord System_InvokeSyscall(System_t *System, Machine_t *Machine, Memory *Mem, const QWord Number);
 
 QWord Sys_FlushOut(System_t *System, Machine_t *Machine, Memory *Mem);
 
-size_t Kernel_SplitArgs(System_t *System, const char *String, char *Out);
+size_t System_SplitArgs(System_t *System, const char *String, char *Out);
 
-void Kernel_DumpLs(System_t *System, const Directory_t *Dir);
+void System_DumpLs(System_t *System, const Directory_t *Dir);
 
 #endif // SYSTEM_H

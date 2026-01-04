@@ -24,10 +24,10 @@ Byte ExecuteNonvirtualFile(const char *Name, System_t *System)
     fclose(f);
 
     Machine_t Machine = {0};
-    Kernel_AddMachine(System, &Machine, &Mem);
+    System_AddMachine(System, &Machine, &Mem);
 
-    Kernel_ExecuteAll(System);
-    Kernel_RemoveMachines(System);
+    System_ExecuteAll(System);
+    System_RemoveMachines(System);
     Machine_Free(&Machine);
 
     Byte ExitCode = Memory_ReadByte(&Mem, REGISTER_A);
@@ -47,10 +47,10 @@ Byte ExecuteVirtualFile(const char *Name, System_t *System, Directory_t *Current
     File_Close(File);
 
     Machine_t Machine = {0};
-    Kernel_AddMachine(System, &Machine, &Mem);
+    System_AddMachine(System, &Machine, &Mem);
 
-    Kernel_ExecuteAll(System);
-    Kernel_RemoveMachines(System);
+    System_ExecuteAll(System);
+    System_RemoveMachines(System);
     Machine_Free(&Machine);
 
     Byte ExitCode = Memory_ReadByte(&Mem, REGISTER_A);
@@ -133,7 +133,7 @@ int REPL(System_t *System)
         {
             char Argv[56] = {0};
             char *pArgv = Argv;
-            size_t Argc = Kernel_SplitArgs(System, Buffer, pArgv);
+            size_t Argc = System_SplitArgs(System, Buffer, pArgv);
             if (Argc <= 0)
             {
                 continue;
@@ -142,7 +142,7 @@ int REPL(System_t *System)
             {
                 if (strcmp(pArgv, "ls") == 0)
                 {
-                    Kernel_DumpLs(System, CurrentWorkingDir);
+                    System_DumpLs(System, CurrentWorkingDir);
                 }
                 else
                 {
@@ -211,7 +211,7 @@ int main(int argc, const char **argv)
     }
 
     System_t System;
-    Kernel_Init(&System);
+    System_Init(&System);
     System.Config.FlushCallback = FlushFn;
 
     Byte ExitCode = 0;
@@ -224,7 +224,7 @@ int main(int argc, const char **argv)
         ExitCode = REPL(&System);
     }
 
-    Kernel_Free(&System);
+    System_Free(&System);
 
     return ExitCode;
 }

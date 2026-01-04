@@ -82,7 +82,7 @@ void MachineNode_Append(MachineNode *List, MachineNode *NewNode)
 }
 
 
-void Kernel_Init(System_t *System)
+void System_Init(System_t *System)
 {
     System->List = NULL;
     Memory_Zero(&System->Out.Mem);
@@ -93,11 +93,11 @@ void Kernel_Init(System_t *System)
     System->Config = (SystemConfig_t) {0};
 }
 
-void Kernel_Free(System_t *System)
+void System_Free(System_t *System)
 {
     File_Close(&System->Out);
 
-    Kernel_RemoveMachines(System);
+    System_RemoveMachines(System);
 
     LsNode *Node = System->RootDir.Ls;
     while (Node)
@@ -109,7 +109,7 @@ void Kernel_Free(System_t *System)
     }
 }
 
-void Kernel_RemoveMachines(System_t *System)
+void System_RemoveMachines(System_t *System)
 {
     MachineNode *Node = System->List;
     System->List = NULL;
@@ -121,7 +121,7 @@ void Kernel_RemoveMachines(System_t *System)
     }
 }
 
-void Kernel_AddMachine(System_t *System, Machine_t *Machine, Memory *Mem)
+void System_AddMachine(System_t *System, Machine_t *Machine, Memory *Mem)
 {
     MachineNode *Node = malloc(sizeof(MachineNode));
     Node->Machine = Machine;
@@ -143,7 +143,7 @@ void Kernel_AddMachine(System_t *System, Machine_t *Machine, Memory *Mem)
     }
 }
 
-void Kernel_ExecuteAll(System_t *System)
+void System_ExecuteAll(System_t *System)
 {
     (void)System;
 
@@ -160,7 +160,7 @@ void Kernel_ExecuteAll(System_t *System)
     }
 }
 
-QWord Kernel_InvokeSyscall(System_t *System, Machine_t *Machine, Memory *Mem, const QWord Number)
+QWord System_InvokeSyscall(System_t *System, Machine_t *Machine, Memory *Mem, const QWord Number)
 {
     (void)System;
     if (Number < sizeof(SyscallTable) / sizeof(SyscallFunction))
@@ -175,7 +175,7 @@ QWord Kernel_InvokeSyscall(System_t *System, Machine_t *Machine, Memory *Mem, co
     }
 }
 
-size_t Kernel_SplitArgs(System_t *System, const char *String, char *Out)
+size_t System_SplitArgs(System_t *System, const char *String, char *Out)
 {
     (void)System;
 
@@ -197,7 +197,7 @@ size_t Kernel_SplitArgs(System_t *System, const char *String, char *Out)
     return argc;
 }
 
-void Kernel_DumpLs(System_t *System, const Directory_t *Dir)
+void System_DumpLs(System_t *System, const Directory_t *Dir)
 {
     {
         LsNode *Node = Dir->Ls;
