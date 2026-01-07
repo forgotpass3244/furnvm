@@ -69,7 +69,8 @@ typedef unsigned long long QWord;
 #define INC_QWORD          29
 #define JUMP_IF_GREATER    30
 #define MAP_GREATER_BYTE   31
-#define OPCODES_GREATEST MAP_GREATER_BYTE
+#define DEC_QWORD          32
+#define OPCODES_GREATEST DEC_QWORD
 
 // syscall registers
 #define SYSCALL_ARG1       REGISTER64_A

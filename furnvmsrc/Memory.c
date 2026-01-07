@@ -71,6 +71,12 @@ void Memory_IncQWord(Memory *restrict Mem, QWord Address)
 }
 
 MEMORY_DECL
+void Memory_DecQWord(Memory *restrict Mem, QWord Address)
+{
+    Memory_WriteQWord(Mem, Address, Memory_ReadQWord(Mem, Address) - 1);
+}
+
+MEMORY_DECL
 void Memory_DumpData(const Memory *restrict Mem, const size_t Begin, const size_t End)
 {
     printf("  Data:\n");

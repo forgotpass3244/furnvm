@@ -50,6 +50,9 @@ MEMORY_DECL
 void Memory_IncQWord(Memory *restrict Mem, QWord Address);
 
 MEMORY_DECL
+void Memory_DecQWord(Memory *restrict Mem, QWord Address);
+
+MEMORY_DECL
 void Memory_DumpData(const Memory *restrict Mem, const size_t Begin, const size_t End);
 
 #endif // #ifndef MEMORY_C

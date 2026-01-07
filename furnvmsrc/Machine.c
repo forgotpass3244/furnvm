@@ -200,6 +200,7 @@ void Machine_Execute(Machine_t *Machine, Memory *Mem)
         [ADD_QWORD] = &&Label_ADD_QWORD,
         [SUB_QWORD] = &&Label_SUB_QWORD,
         [INC_QWORD] = &&Label_INC_QWORD,
+        [DEC_QWORD] = &&Label_DEC_QWORD,
         [LOAD_EIP] = &&Label_LOAD_EIP,
         [CALL] = &&Label_CALL,
         [RETURN] = &&Label_RETURN,
@@ -421,6 +422,14 @@ void Machine_Execute(Machine_t *Machine, Memory *Mem)
     Label_INC_QWORD:
         QWord Address = Machine_FetchAddress(Machine, Mem);
         Memory_IncQWord(Mem, Address);
+    }
+    break;
+
+    case DEC_QWORD:
+    {
+    Label_DEC_QWORD:
+        QWord Address = Machine_FetchAddress(Machine, Mem);
+        Memory_DecQWord(Mem, Address);
     }
     break;
 
