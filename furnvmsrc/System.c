@@ -91,6 +91,7 @@ void System_Init(System_t *System)
     System->RootDir.Subdirs = NULL;
     System->RootDir.Parent = NULL;
     System->Config = (SystemConfig_t) {0};
+    Memory_Zero(&System->Out.Mem);
 }
 
 void System_Free(System_t *System)
@@ -145,8 +146,6 @@ void System_AddMachine(System_t *System, Machine_t *Machine, Memory *Mem)
 
 void System_ExecuteAll(System_t *System)
 {
-    (void)System;
-
     MachineNode *Node = System->List;
     while (Node)
     {

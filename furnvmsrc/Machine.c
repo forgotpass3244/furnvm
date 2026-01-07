@@ -55,6 +55,7 @@ void Machine_Header(Machine_t *Machine, Memory *Mem)
 
     Machine->Flag_Zero = false;
     Machine->Flag_Equal = false;
+    Machine->Flag_GreaterThan = false;
     Machine->EndInstruction = -1;
 
     // read header
@@ -129,6 +130,8 @@ void Machine_DumpState(const Machine_t *Machine, const Memory *Mem)
     fmprintf(KSTDOUT, "  Flags:\n");
     fmprintf(KSTDOUT, "    Zero = %s\n", BOOL_AS_STR(Machine->Flag_Zero));
     fmprintf(KSTDOUT, "    Equal = %s\n", BOOL_AS_STR(Machine->Flag_Equal));
+
+    fmprintf(KSTDOUT, "\n    Inst = %llu\n", Memory_ReadByte(Mem, Memory_ReadQWord(Mem, INST_PTR)));
 }
 
 Byte Machine_FetchByte(Machine_t *Machine, Memory *Mem)
@@ -188,7 +191,7 @@ void Machine_Execute(Machine_t *Machine, Memory *Mem)
         [SET_FLAGS_BYTE] = &&Label_SET_FLAGS_BYTE,
         [COMPARE_QWORD] = &&Label_COMPARE_QWORD,
         [COMPARE_BYTE] = &&Label_COMPARE_BYTE,
-        [TICK_EQUAL] = &&Label_TICK_EQUAL,
+        [TICK_FLAGS] = &&Label_TICK_FLAGS,
         [DUMP_STATE] = &&Label_DUMP_STATE,
         [DUMP_VALUE_64] = &&Label_DUMP_VALUE_64,
         [DUMP_VALUE] = &&Label_DUMP_VALUE,
@@ -196,11 +199,14 @@ void Machine_Execute(Machine_t *Machine, Memory *Mem)
         [SUB_BYTE] = &&Label_SUB_BYTE,
         [ADD_QWORD] = &&Label_ADD_QWORD,
         [SUB_QWORD] = &&Label_SUB_QWORD,
+        [INC_QWORD] = &&Label_INC_QWORD,
         [LOAD_EIP] = &&Label_LOAD_EIP,
         [CALL] = &&Label_CALL,
         [RETURN] = &&Label_RETURN,
         [JUMP] = &&Label_JUMP,
         [JUMP_IF_EQUAL] = &&Label_JUMP_IF_EQUAL,
+        [JUMP_IF_GREATER] = &&Label_JUMP_IF_GREATER,
+        [MAP_GREATER_BYTE] = &&Label_MAP_GREATER_BYTE,
         [JUMP_IF_ZERO] = &&Label_JUMP_IF_ZERO,
         [SYSCALL] = &&Label_SYSCALL,
         [MOVE_DYNAMIC] = &&Label_MOVE_DYNAMIC,
@@ -272,18 +278,20 @@ void Machine_Execute(Machine_t *Machine, Memory *Mem)
     case DEREF_BYTE: // memory random access read and put back into register
     {
     Label_DEREF_BYTE:
-        QWord Register = Machine_FetchAddress(Machine, Mem);
-        QWord AddressToDeref = Memory_ReadQWord(Mem, Register);
-        Memory_WriteByte(Mem, Register, Memory_ReadByte(Mem, AddressToDeref));
+        QWord Source = Machine_FetchAddress(Machine, Mem);
+        QWord Destination = Machine_FetchAddress(Machine, Mem);
+        QWord AddressToDeref = Memory_ReadQWord(Mem, Source);
+        Memory_WriteByte(Mem, Destination, Memory_ReadByte(Mem, AddressToDeref));
     }
     break;
 
     case DEREF_QWORD: // memory random access read and put back into register
     {
     Label_DEREF_QWORD:
-        QWord Register = Machine_FetchAddress(Machine, Mem);
-        QWord AddressToDeref = Memory_ReadQWord(Mem, Register);
-        Memory_WriteQWord(Mem, Register, Memory_ReadQWord(Mem, AddressToDeref));
+        QWord Source = Machine_FetchAddress(Machine, Mem);
+        QWord Destination = Machine_FetchAddress(Machine, Mem);
+        QWord AddressToDeref = Memory_ReadQWord(Mem, Source);
+        Memory_WriteQWord(Mem, Destination, Memory_ReadQWord(Mem, AddressToDeref));
     }
     break;
 
@@ -301,7 +309,11 @@ void Machine_Execute(Machine_t *Machine, Memory *Mem)
         QWord FirstRegister = Machine_FetchAddress(Machine, Mem);
         QWord SecondRegister = Machine_FetchAddress(Machine, Mem);
 
-        Machine->Flag_Equal = (Memory_ReadQWord(Mem, FirstRegister) == Memory_ReadQWord(Mem, SecondRegister));
+        QWord FirstValue = Memory_ReadQWord(Mem, FirstRegister);
+        QWord SecondValue = Memory_ReadQWord(Mem, SecondRegister);
+
+        Machine->Flag_Equal = (FirstValue == SecondValue);
+        Machine->Flag_GreaterThan = (FirstValue > SecondValue);
     }
     break;
 
@@ -311,14 +323,11 @@ void Machine_Execute(Machine_t *Machine, Memory *Mem)
         QWord FirstRegister = Machine_FetchAddress(Machine, Mem);
         QWord SecondRegister = Machine_FetchAddress(Machine, Mem);
 
-        Machine->Flag_Equal = (Memory_ReadByte(Mem, FirstRegister) == Memory_ReadByte(Mem, SecondRegister));
-    }
-    break;
+        QWord FirstValue = Memory_ReadByte(Mem, FirstRegister);
+        QWord SecondValue = Memory_ReadByte(Mem, SecondRegister);
 
-    case TICK_EQUAL: // flip equal flag
-    {
-    Label_TICK_EQUAL:
-        Machine->Flag_Equal ^= true; // evil black magic
+        Machine->Flag_Equal = (FirstValue == SecondValue);
+        Machine->Flag_GreaterThan = (FirstValue > SecondValue);
     }
     break;
 
@@ -407,6 +416,14 @@ void Machine_Execute(Machine_t *Machine, Memory *Mem)
     }
     break;
 
+    case INC_QWORD:
+    {
+    Label_INC_QWORD:
+        QWord Address = Machine_FetchAddress(Machine, Mem);
+        Memory_IncQWord(Mem, Address);
+    }
+    break;
+
     case LOAD_EIP: // put EIP into a register
     {
     Label_LOAD_EIP:
@@ -477,6 +494,30 @@ void Machine_Execute(Machine_t *Machine, Memory *Mem)
     }
     break;
 
+    case MAP_GREATER_BYTE:
+    {
+    Label_MAP_GREATER_BYTE:
+        QWord Address = Machine_FetchAddress(Machine, Mem);
+
+        Memory_WriteByte(
+            Mem,
+            Address,
+            Machine->Flag_GreaterThan);
+    }
+    break;
+
+    case JUMP_IF_GREATER: // jump to address in register if greaterthan flag is true
+    {
+    Label_JUMP_IF_GREATER:
+        QWord Address = Machine_FetchAddress(Machine, Mem);
+
+        Memory_WriteQWord(
+            Mem,
+            INST_PTR,
+            (Machine->Flag_GreaterThan ? Address : Memory_ReadQWord(Mem, INST_PTR)));
+    }
+    break;
+
     case JUMP_IF_ZERO: // jump to address in register if zero flag is true
     {
     Label_JUMP_IF_ZERO:
@@ -486,6 +527,16 @@ void Machine_Execute(Machine_t *Machine, Memory *Mem)
             Mem,
             INST_PTR,
             (Machine->Flag_Zero ? Address : Memory_ReadQWord(Mem, INST_PTR)));
+    }
+    break;
+
+    case TICK_FLAGS: // flip equal flag
+    {
+    Label_TICK_FLAGS:
+        // evil black magic
+        Machine->Flag_Equal ^= true;
+        Machine->Flag_GreaterThan ^= true;
+        Machine->Flag_Zero ^= true;
     }
     break;
 
@@ -580,7 +631,11 @@ void Machine_Execute(Machine_t *Machine, Memory *Mem)
         Byte SyscallNumber = Machine_FetchByte(Machine, Mem);
         QWord ResultRegister = Machine_FetchAddress(Machine, Mem);
         QWord Result = SyscallRequester_Invoke(Machine->SyscallRequest, SyscallNumber);
-        Memory_WriteQWord(Mem, ResultRegister, Result);
+        
+        if (ResultRegister)
+        {
+            Memory_WriteQWord(Mem, ResultRegister, Result);
+        }
     }
     break;
 

@@ -31,6 +31,7 @@ struct Machine_t
     // flags
     Bit Flag_Zero;
     Bit Flag_Equal;
+    Bit Flag_GreaterThan;
 
     // kernel connection
     SyscallRequester *restrict SyscallRequest;

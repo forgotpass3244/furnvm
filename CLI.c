@@ -9,7 +9,7 @@
 #include "furnvm.h"
 #include "Disassembler.h"
 
-Byte ExecuteNonvirtualFile(const char *Name, System_t *System)
+Byte ExecuteNonvirtualFile(const char *Name, System_t *System, bool Debug)
 {
     FILE *f = fopen(Name, "rb");
     if (f == NULL)
@@ -26,7 +26,28 @@ Byte ExecuteNonvirtualFile(const char *Name, System_t *System)
     Machine_t Machine = {0};
     System_AddMachine(System, &Machine, &Mem);
 
-    System_ExecuteAll(System);
+
+    if (!Debug)
+    {
+        System_ExecuteAll(System);
+    }
+    else
+    {
+        Machine_Header(&Machine, &Mem);
+        Machine.IsRunning = true;
+        while (Machine.IsRunning)
+        {
+            int _system = system("clear");
+            (void)_system;
+            Machine_DumpState(&Machine, &Mem);
+            SyscallRequester_Invoke(Machine.SyscallRequest, SYSNUM_WRITE_OUT);
+            Sys_FlushOut(System, &Machine, &Mem);
+            Machine_Execute(&Machine, &Mem);
+            getchar();
+        }
+    }
+    
+    SyscallRequester_Invoke(Machine.SyscallRequest, SYSNUM_WRITE_OUT);
     System_RemoveMachines(System);
     Machine_Free(&Machine);
 
@@ -50,6 +71,7 @@ Byte ExecuteVirtualFile(const char *Name, System_t *System, Directory_t *Current
     System_AddMachine(System, &Machine, &Mem);
 
     System_ExecuteAll(System);
+    SyscallRequester_Invoke(Machine.SyscallRequest, SYSNUM_WRITE_OUT);
     System_RemoveMachines(System);
     Machine_Free(&Machine);
 
@@ -217,7 +239,7 @@ int main(int argc, const char **argv)
     Byte ExitCode = 0;
     if (argc > 1)
     {
-        ExitCode = ExecuteNonvirtualFile(argv[1], &System);
+        ExitCode = ExecuteNonvirtualFile(argv[1], &System, false);
     }
     else
     {

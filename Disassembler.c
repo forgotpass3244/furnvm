@@ -152,6 +152,14 @@ void DisassembleExecutable(Memory *restrict Executable, File_t *Out)
         }
         break;
 
+        case INC_QWORD:
+        {
+            QWord Address = Memory_ReadQWord(Executable, i);
+            i += sizeof(QWord);
+            fmprintf(Out, "inc64 %llu\n", Address);
+        }
+        break;
+
         case DEREF_QWORD:
         {
             QWord Register = Memory_ReadQWord(Executable, i);

@@ -54,7 +54,7 @@ typedef unsigned long long QWord;
 #define JUMP_IF_EQUAL      14
 #define SYSCALL            15
 #define COMPARE_QWORD      16
-#define TICK_EQUAL         17
+#define TICK_FLAGS         17
 #define MOVE_QWORD         18
 #define MOVE_DYNAMIC       19
 #define CALL               20
@@ -66,7 +66,10 @@ typedef unsigned long long QWord;
 #define STACK_POINTER_FROM_OFFSET 26
 #define STACK_WRITE_QWORD  27
 #define STACK_READ_QWORD   28
-#define OPCODES_GREATEST STACK_READ_QWORD
+#define INC_QWORD          29
+#define JUMP_IF_GREATER    30
+#define MAP_GREATER_BYTE   31
+#define OPCODES_GREATEST MAP_GREATER_BYTE
 
 // syscall registers
 #define SYSCALL_ARG1       REGISTER64_A
@@ -76,7 +79,7 @@ typedef unsigned long long QWord;
 
 // syscall numbers
 #define SYSNUM_EXIT        0
-#define SYSNUM_WRITE       1
+#define SYSNUM_WRITE_OUT   1
 
 #ifndef NO_INCLUDE_FURNVM_HEADERS_FLAG
 #include "furnvmsrc/System.h" // the source code of furnvm
